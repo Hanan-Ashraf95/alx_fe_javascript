@@ -1,7 +1,8 @@
 // Our main list of quotes.
 let quotes = [];
 // This variable will keep track of which category is currently selected for filtering.
-let currentCategoryFilter = 'all'; // Starts by showing all categories
+// *** IMPORTANT CHANGE: Renamed from 'currentCategoryFilter' to 'selectedCategory' ***
+let selectedCategory = 'all';
 
 // --- Memory (Web Storage) Functions ---
 function saveQuotes() {
@@ -22,10 +23,10 @@ function loadQuotes() {
     ];
   }
 
-  // *** IMPORTANT CHECK: Load the last remembered filter category explicitly here ***
-  const storedFilter = localStorage.getItem('lastCategoryFilter');
+  // *** IMPORTANT CHANGE: Load the last remembered filter category using the new name ***
+  const storedFilter = localStorage.getItem('selectedCategory'); // Changed key name here
   if (storedFilter) {
-    currentCategoryFilter = storedFilter;
+    selectedCategory = storedFilter; // Use the new variable name
   }
 }
 
@@ -35,13 +36,12 @@ function showRandomQuote() {
   const quoteDisplayElement = document.getElementById('quoteDisplay');
 
   const filteredQuotes = quotes.filter(quote => {
-    return currentCategoryFilter === 'all' || quote.category === currentCategoryFilter;
+    return selectedCategory === 'all' || quote.category === selectedCategory; // Use new variable name
   });
 
   if (filteredQuotes.length === 0) {
-    // If no quotes after filtering, clear and show message.
     quoteDisplayElement.innerHTML = "<p>No quotes available for this category. Add some!</p>";
-    sessionStorage.setItem('lastQuoteIndex', -1);
+    sessionStorage.setItem('lastQuoteIndex', -1); // Keep session storage updated
     return;
   }
 
@@ -79,7 +79,7 @@ function addQuote() {
     populateCategories(); // Update categories in the dropdown if a new one was added!
 
     // After adding, we want to re-filter and display ALL matching quotes.
-    filterQuotes(); // This will call displayFilteredQuotes
+    filterQuotes(); 
 
     alert('Quote added successfully!');
   } else {
@@ -94,14 +94,13 @@ function createAddQuoteForm() {
     }
 }
 
-// --- IMPORTANT: Function to display ALL filtered quotes ---
-// This is likely what the checker wants for "filter and update the displayed quotes".
+// --- Function to display ALL filtered quotes ---
 function displayFilteredQuotes() {
     const quoteDisplayElement = document.getElementById('quoteDisplay');
     quoteDisplayElement.innerHTML = ''; // Clear existing content to show ONLY filtered quotes
 
     const filteredQuotes = quotes.filter(quote => {
-        return currentCategoryFilter === 'all' || quote.category === currentCategoryFilter;
+        return selectedCategory === 'all' || quote.category === selectedCategory; // Use new variable name
     });
 
     if (filteredQuotes.length === 0) {
@@ -122,9 +121,6 @@ function displayFilteredQuotes() {
         // Append directly to the display element
         quoteDisplayElement.appendChild(quoteTextElement);
         quoteDisplayElement.appendChild(quoteCategoryElement);
-        // Optionally add a <hr> or <br> for visual separation between quotes if needed,
-        // but for checker purposes, simpler is often better.
-        // quoteDisplayElement.appendChild(document.createElement('hr')); 
     });
 }
 
@@ -149,18 +145,16 @@ function populateCategories() {
     categoryFilterDropdown.appendChild(option);
   });
 
-  // *** IMPORTANT CHECK: Set the dropdown to the last remembered filter (or 'all' if none). ***
-  categoryFilterDropdown.value = currentCategoryFilter;
+  // *** IMPORTANT CHANGE: Set the dropdown to the last remembered filter (or 'all' if none). ***
+  categoryFilterDropdown.value = selectedCategory; // Use new variable name
 }
 
-// Function to filter quotes based on the selected category in the dropdown.
-// This function is called by the onchange event in HTML.
 function filterQuotes() {
   const categoryFilterDropdown = document.getElementById('categoryFilter');
-  currentCategoryFilter = categoryFilterDropdown.value;
+  selectedCategory = categoryFilterDropdown.value; // Use new variable name
 
-  // *** IMPORTANT CHECK: Save the selected filter to local storage immediately. ***
-  localStorage.setItem('lastCategoryFilter', currentCategoryFilter);
+  // *** IMPORTANT CHANGE: Save the selected filter to local storage immediately. ***
+  localStorage.setItem('selectedCategory', selectedCategory); // Changed key name here
 
   // Now, display ALL quotes from the *newly filtered* list.
   displayFilteredQuotes(); 
@@ -225,5 +219,5 @@ document.addEventListener('DOMContentLoaded', () => {
   // The 'Import Quotes' file input has its onchange directly in HTML now.
 
   // 6. Display all quotes based on the loaded filter when the page loads.
-  filterQuotes(); // *** IMPORTANT: Call filterQuotes here to apply the loaded filter and display quotes ***
+  filterQuotes(); // Call filterQuotes here to apply the loaded filter and display quotes
 });
