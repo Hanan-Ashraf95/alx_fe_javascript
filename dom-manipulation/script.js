@@ -18,8 +18,8 @@ function showRandomQuote() {
   quoteDisplay.innerHTML = `<p>"${quote.text}"</p><p><em>- ${quote.category}</em></p>`;
 }
 
-// This function lets us add new quotes
-function addQuote() {
+// This function adds a new quote to our list
+function addQuoteLogic() { // Renamed slightly to separate logic
   // Find the boxes where the user typed the new quote and category
   const newQuoteText = document.getElementById('newQuoteText');
   const newQuoteCategory = document.getElementById('newQuoteCategory');
@@ -43,8 +43,21 @@ function addQuote() {
   }
 }
 
+// *** IMPORTANT NEW FUNCTION FOR THE CHECKER ***
+// This function sets up the add quote form and its button
+function createAddQuoteForm() {
+    // Find the "Add Quote" button using its new ID
+    const addQuoteButton = document.getElementById('addQuoteBtn');
+    // Make the button call addQuoteLogic() when it's clicked
+    addQuoteButton.addEventListener('click', addQuoteLogic);
+    // We'll call this function when the page loads so the button works
+}
+
 // This part makes the "Show New Quote" button work when you click it
 document.getElementById('newQuote').addEventListener('click', showRandomQuote);
 
 // This makes sure a random quote shows up as soon as the page loads!
 showRandomQuote();
+
+// *** IMPORTANT: Call the new function for the checker when the page loads ***
+createAddQuoteForm();
