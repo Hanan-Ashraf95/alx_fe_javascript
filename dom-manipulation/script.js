@@ -1,52 +1,67 @@
-// This is our list of quotes.
-const quotes = [
-  { text: "The only way to do great work is to love what you do.", category: "Motivation" },
-  { text: "Innovation distinguishes between a leader and a follower.", category: "Innovation" },
-  { text: "Stay hungry, stay foolish.", category: "Motivation" },
-  { text: "Believe you can and you're halfway there.", category: "Inspiration" }
-];
+// This is our list of quotes. It's like a secret list inside the machine!
+// We'll start with some default quotes if memory is empty.
+let quotes = []; // Changed to 'let' because we will replace it when loading from memory
+
+// --- Memory (Web Storage) Functions ---
+
+// Function to save the current list of quotes to the machine's long-term memory (Local Storage).
+function saveQuotes() {
+  // We turn our JavaScript list of quotes into a special text format (JSON string)
+  // that the memory can understand and store.
+  localStorage.setItem('quotes', JSON.stringify(quotes));
+}
+
+// Function to load quotes from the machine's long-term memory.
+function loadQuotes() {
+  // We ask the memory if it has anything saved under 'quotes'.
+  const storedQuotes = localStorage.getItem('quotes');
+  // If it found something, we turn that special text format back into a JavaScript list.
+  if (storedQuotes) {
+    quotes = JSON.parse(storedQuotes);
+  } else {
+    // If memory is empty, we start with some default quotes.
+    quotes = [
+      { text: "The only way to do great work is to love what you do.", category: "Motivation" },
+      { text: "Innovation distinguishes between a leader and a follower.", category: "Innovation" },
+      { text: "Stay hungry, stay foolish.", category: "Motivation" },
+      { text: "Believe you can and you're halfway there.", category: "Inspiration" }
+    ];
+  }
+}
+
+// --- Quote Display and Add Functions (from previous task) ---
 
 // Function to display a random quote.
 function showRandomQuote() {
-  // If there are no quotes in our list, display a message and stop.
   if (quotes.length === 0) {
     document.getElementById('quoteDisplay').innerHTML = "<p>No quotes available. Add some!</p>";
+    // Optional: Store the last viewed quote index in short-term memory (Session Storage)
+    sessionStorage.setItem('lastQuoteIndex', -1);
     return;
   }
 
-  // 1. Pick a random quote from our list.
   const randomIndex = Math.floor(Math.random() * quotes.length);
   const quote = quotes[randomIndex];
-
-  // 2. Find the special box in our HTML where we want to show the quote.
   const quoteDisplayElement = document.getElementById('quoteDisplay');
 
-  // 3. *** IMPORTANT CHANGE: Clear out any old quote first ***
-  quoteDisplayElement.innerHTML = ''; 
+  quoteDisplayElement.innerHTML = ''; // Clear old content
 
-  // 4. *** IMPORTANT CHANGE: Create new HTML pieces using createElement and appendChild ***
-
-  // Create a brand new <p> (paragraph) tag for the quote text.
   const quoteTextElement = document.createElement('p');
-  // Put the quote's text inside this new <p> tag.
-  quoteTextElement.textContent = `"${quote.text}"`; 
+  quoteTextElement.textContent = `"${quote.text}"`;
 
-  // Create another brand new <p> tag for the category/author.
   const quoteCategoryElement = document.createElement('p');
-  // Create an <em> tag (for italic text) inside this new paragraph.
-  const emElement = document.createElement('em'); 
-  // Put the category text inside the <em> tag.
+  const emElement = document.createElement('em');
   emElement.textContent = `- ${quote.category}`;
-  // Put the <em> tag inside the <p> tag.
-  quoteCategoryElement.appendChild(emElement); 
+  quoteCategoryElement.appendChild(emElement);
 
-  // Now, put our new <p> tags into the 'quoteDisplay' box.
-  // We're like adding new LEGO bricks to our structure.
   quoteDisplayElement.appendChild(quoteTextElement);
   quoteDisplayElement.appendChild(quoteCategoryElement);
+
+  // Optional: Store the last viewed quote index in short-term memory (Session Storage)
+  sessionStorage.setItem('lastQuoteIndex', randomIndex);
 }
 
-// Function to handle adding a new quote from the user's input.
+// Function to handle adding a new quote.
 function addQuote() {
   const newQuoteTextInput = document.getElementById('newQuoteText');
   const newQuoteCategoryInput = document.getElementById('newQuoteCategory');
@@ -55,37 +70,111 @@ function addQuote() {
   const category = newQuoteCategoryInput.value.trim();
 
   if (text && category) {
-    quotes.push({ text, category }); // Add the new quote to our list
-    newQuoteTextInput.value = '';    // Clear the text box
-    newQuoteCategoryInput.value = '';// Clear the category box
-    showRandomQuote();               // Show a new quote (might be the one just added!)
+    quotes.push({ text, category });
+    newQuoteTextInput.value = '';
+    newQuoteCategoryInput.value = '';
+    showRandomQuote();
+    saveQuotes(); // *** IMPORTANT: Save quotes to memory after adding! ***
     alert('Quote added successfully!');
   } else {
     alert('Please enter both quote text and category!');
   }
 }
 
-// This function is specifically for the checker to see.
-// It sets up the 'Add Quote' button.
+// Function to set up the 'Add Quote' form button.
 function createAddQuoteForm() {
     const addQuoteButton = document.getElementById('addQuoteBtn');
-    if (addQuoteButton) { 
-        addQuoteButton.addEventListener('click', addQuote); // Connects button to addQuote function
+    if (addQuoteButton) {
+        addQuoteButton.addEventListener('click', addQuote);
     }
 }
 
-// This is super important: it waits for all the HTML to be ready
-// before our JavaScript starts looking for buttons and boxes.
+// --- JSON Import/Export Functions ---
+
+// Function to export quotes to a JSON file (creating a "recipe card" file).
+function exportQuotes() {
+  // Turn our list of quotes into a nicely formatted JSON text.
+  const jsonString = JSON.stringify(quotes, null, 2); // 'null, 2' makes it pretty with spaces
+
+  // Create a special "blob" of data that can be downloaded.
+  const blob = new Blob([jsonString], { type: 'application/json' });
+
+  // Create a temporary link on the webpage.
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); // This is like creating a temporary download button
+
+  // Set the link's properties.
+  a.href = url;
+  a.download = 'quotes.json'; // This is the name of the file that will be downloaded
+  document.body.appendChild(a); // Temporarily add the link to the page
+
+  a.click(); // "Click" the link automatically to start the download
+
+  // Clean up the temporary link and URL after a short delay.
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Function to import quotes from a JSON file (reading a "recipe card" file).
+// This function is called automatically when a file is selected in the input slot.
+function importFromJsonFile(event) {
+  const fileReader = new FileReader(); // This is a tool to read files
+
+  // What to do when the file is finished reading:
+  fileReader.onload = function(event) {
+    try {
+      // Try to turn the text from the file back into a JavaScript list of quotes.
+      const importedQuotes = JSON.parse(event.target.result);
+
+      // Check if the imported data looks like an array of objects.
+      if (Array.isArray(importedQuotes) && importedQuotes.every(q => typeof q.text === 'string' && typeof q.category === 'string')) {
+        // Add the imported quotes to our existing list.
+        quotes.push(...importedQuotes); // '...' means add each item separately
+        saveQuotes(); // Save the updated list to memory
+        showRandomQuote(); // Show a new quote
+        alert('Quotes imported successfully!');
+      } else {
+        alert('Invalid JSON file format. Please upload a file with an array of quote objects (text, category).');
+      }
+    } catch (e) {
+      alert('Error parsing JSON file: ' + e.message);
+    }
+  };
+
+  // Start reading the file as text.
+  fileReader.readAsText(event.target.files[0]);
+}
+
+// --- Initial Setup When Page Loads ---
+
+// This makes sure our JavaScript code runs only after all the HTML elements
+// are fully loaded and ready in the browser. This is good practice!
 document.addEventListener('DOMContentLoaded', () => {
-  // Set up the "Show New Quote" button.
+  // 1. Load quotes from memory first thing!
+  loadQuotes();
+
+  // 2. Set up the "Show New Quote" button.
   const newQuoteButton = document.getElementById('newQuote');
   if (newQuoteButton) {
-      newQuoteButton.addEventListener('click', showRandomQuote); // Connects button to showRandomQuote function
+      newQuoteButton.addEventListener('click', showRandomQuote);
   }
 
-  // Call the function that sets up the 'Add Quote' form.
+  // 3. Set up the 'Add Quote' form button.
   createAddQuoteForm();
 
-  // Show an initial random quote when the page first loads.
+  // 4. Set up the 'Export Quotes' button.
+  const exportQuotesButton = document.getElementById('exportQuotesBtn');
+  if (exportQuotesButton) {
+      exportQuotesButton.addEventListener('click', exportQuotes);
+  }
+
+  // 5. Set up the 'Import Quotes' file input.
+  const importFileInput = document.getElementById('importFile');
+  if (importFileInput) {
+      // When a file is selected, call our import function.
+      importFileInput.addEventListener('change', importFromJsonFile);
+  }
+
+  // 6. Display an initial random quote when the page first loads.
   showRandomQuote();
 });
