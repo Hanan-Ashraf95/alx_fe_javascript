@@ -12,8 +12,7 @@
     <label for="categoryFilter">Filter by Category:</label>
     <select id="categoryFilter" onchange="filterQuotes()">
       <option value="all">All Categories</option>
-      <!-- Dynamically populated categories -->
-    </select>
+      </select>
   </div>
   <br>
 
@@ -35,6 +34,9 @@
     <input type="file" id="importFile" accept=".json" onchange="importFromJsonFile(event)" />
   </div>
 
-  <script src="script.js"></script>
+  <br><br> <div>
+    <button id="syncNowBtn">Sync Now (Check Server)</button>
+  </div>
+  <div id="notificationArea" style="margin-top: 20px; color: blue;"></div> <script src="script.js"></script>
 </body>
 </html>
