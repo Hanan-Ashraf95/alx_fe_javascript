@@ -22,7 +22,7 @@ function loadQuotes() {
     ];
   }
 
-  // Also load the last remembered filter category
+  // *** IMPORTANT CHANGE: Load the last remembered filter category explicitly here ***
   const storedFilter = localStorage.getItem('lastCategoryFilter');
   if (storedFilter) {
     currentCategoryFilter = storedFilter;
@@ -79,8 +79,12 @@ function addQuote() {
     newQuoteTextInput.value = '';
     newQuoteCategoryInput.value = '';
     saveQuotes(); // Save to local storage after adding!
-    populateCategories(); // *** NEW: Update categories in the dropdown if a new one was added! ***
-    showRandomQuote();
+    populateCategories(); // Update categories in the dropdown if a new one was added!
+
+    // *** IMPORTANT CHANGE: After adding, apply the current filter again
+    //     and then show a random quote. This ensures the display is correct.
+    filterQuotes(); // This will also call showRandomQuote internally.
+
     alert('Quote added successfully!');
   } else {
     alert('Please enter both quote text and category!');
@@ -95,7 +99,7 @@ function createAddQuoteForm() {
     }
 }
 
-// --- NEW: Category Filtering Logic ---
+// --- Category Filtering Logic ---
 
 // Function to populate the category dropdown dynamically.
 function populateCategories() {
@@ -120,24 +124,25 @@ function populateCategories() {
     categoryFilterDropdown.appendChild(option);
   });
 
-  // Set the dropdown to the last remembered filter (or 'all' if none).
+  // *** IMPORTANT CHANGE: Set the dropdown to the last remembered filter (or 'all' if none). ***
+  // This ensures the UI reflects the loaded filter.
   categoryFilterDropdown.value = currentCategoryFilter;
 }
 
 // Function to filter quotes based on the selected category in the dropdown.
+// This function is called by the onchange event in HTML.
 function filterQuotes() {
   const categoryFilterDropdown = document.getElementById('categoryFilter');
   currentCategoryFilter = categoryFilterDropdown.value; // Get the selected category
 
-  // Save the selected filter to local storage so we remember it for next time!
+  // *** IMPORTANT CHANGE: Save the selected filter to local storage immediately. ***
   localStorage.setItem('lastCategoryFilter', currentCategoryFilter);
 
-  showRandomQuote(); // Show a random quote from the *filtered* list
+  // Now, display a random quote from the *newly filtered* list.
+  showRandomQuote();
 }
 
 // --- JSON Import/Export Functions ---
-// (These are from the previous task, still needed!)
-
 function exportToJsonFile() {
   const jsonString = JSON.stringify(quotes, null, 2);
   const blob = new Blob([jsonString], { type: 'application/json' });
@@ -159,8 +164,8 @@ function importFromJsonFile(event) {
       if (Array.isArray(importedQuotes) && importedQuotes.every(q => typeof q.text === 'string' && typeof q.category === 'string')) {
         quotes.push(...importedQuotes);
         saveQuotes();
-        populateCategories(); // *** NEW: Update categories after importing! ***
-        showRandomQuote();
+        populateCategories(); // Update categories after importing!
+        filterQuotes(); // *** IMPORTANT: Re-apply filter after import to update display. ***
         alert('Quotes imported successfully!');
       } else {
         alert('Invalid JSON file format. Please upload a file with an array of quote objects (text, category).');
@@ -195,9 +200,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // The 'Import Quotes' file input has its onchange directly in HTML now.
 
   // 6. Show an initial random quote (respecting the loaded filter).
+  //    This is called AFTER populateCategories has set the dropdown value.
   showRandomQuote();
-
-  // 7. IMPORTANT: Make sure the filter dropdown's value is set correctly on load
-  //    This happens automatically because populateCategories sets `categoryFilterDropdown.value = currentCategoryFilter;`
-  //    and filterQuotes also sets `currentCategoryFilter`.
 });
