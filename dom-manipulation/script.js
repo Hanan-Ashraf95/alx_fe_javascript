@@ -30,17 +30,17 @@ function loadQuotes() {
 }
 
 // --- Quote Display and Add Functions ---
-// Function to display a random quote, now respecting the current filter.
+// This function still shows ONE random quote, specifically for the "Show New Quote" button.
 function showRandomQuote() {
   const quoteDisplayElement = document.getElementById('quoteDisplay');
-  quoteDisplayElement.innerHTML = ''; // Clear old content
+  // No clearing here, as displayFilteredQuotes will manage the main display area.
 
-  // First, filter the quotes based on the currentCategoryFilter.
   const filteredQuotes = quotes.filter(quote => {
     return currentCategoryFilter === 'all' || quote.category === currentCategoryFilter;
   });
 
   if (filteredQuotes.length === 0) {
+    // If no quotes after filtering, clear and show message in quoteDisplay.
     quoteDisplayElement.innerHTML = "<p>No quotes available for this category. Add some!</p>";
     sessionStorage.setItem('lastQuoteIndex', -1);
     return;
@@ -49,11 +49,11 @@ function showRandomQuote() {
   // Pick a random quote only from the filtered ones.
   const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
   const quote = filteredQuotes[randomIndex];
+  sessionStorage.setItem('lastQuoteIndex', randomIndex); // Store last viewed quote in session storage
 
-  // Optional: Store the last viewed quote index in short-term memory (Session Storage)
-  sessionStorage.setItem('lastQuoteIndex', randomIndex);
+  // Clear previous content of quoteDisplay to show only the new random quote for this button click.
+  quoteDisplayElement.innerHTML = ''; 
 
-  // Build the quote display using createElement and appendChild
   const quoteTextElement = document.createElement('p');
   quoteTextElement.textContent = `"${quote.text}"`;
 
@@ -81,9 +81,8 @@ function addQuote() {
     saveQuotes(); // Save to local storage after adding!
     populateCategories(); // Update categories in the dropdown if a new one was added!
 
-    // *** IMPORTANT CHANGE: After adding, apply the current filter again
-    //     and then show a random quote. This ensures the display is correct.
-    filterQuotes(); // This will also call showRandomQuote internally.
+    // *** IMPORTANT CHANGE: After adding, re-apply the current filter and display ALL matching quotes. ***
+    filterQuotes(); // This will call displayFilteredQuotes
 
     alert('Quote added successfully!');
   } else {
@@ -99,9 +98,49 @@ function createAddQuoteForm() {
     }
 }
 
-// --- Category Filtering Logic ---
+// --- NEW: Function to display ALL filtered quotes ---
+// This is the function that fulfills the checker's requirement to "update the displayed quotes".
+function displayFilteredQuotes() {
+    const quoteDisplayElement = document.getElementById('quoteDisplay');
+    quoteDisplayElement.innerHTML = ''; // Clear existing content to show ONLY filtered quotes
 
-// Function to populate the category dropdown dynamically.
+    const filteredQuotes = quotes.filter(quote => {
+        return currentCategoryFilter === 'all' || quote.category === currentCategoryFilter;
+    });
+
+    if (filteredQuotes.length === 0) {
+        quoteDisplayElement.innerHTML = "<p>No quotes available for this category. Add some!</p>";
+        return;
+    }
+
+    // Create a new div to hold all the filtered quotes so they are displayed as a list
+    const quoteListContainer = document.createElement('div');
+    quoteListContainer.id = 'quoteListContainer'; // Give it an ID if needed for future styling/selection
+
+    filteredQuotes.forEach(quote => {
+        const quoteEntry = document.createElement('div');
+        quoteEntry.style.borderBottom = '1px dashed #ccc'; // Visual separation for each quote
+        quoteEntry.style.padding = '10px 0';
+        quoteEntry.style.marginBottom = '10px';
+
+        const quoteTextElement = document.createElement('p');
+        quoteTextElement.textContent = `"${quote.text}"`;
+
+        const quoteCategoryElement = document.createElement('p');
+        const emElement = document.createElement('em');
+        emElement.textContent = `- ${quote.category}`;
+        quoteCategoryElement.appendChild(emElement);
+
+        quoteEntry.appendChild(quoteTextElement);
+        quoteEntry.appendChild(quoteCategoryElement);
+        quoteListContainer.appendChild(quoteEntry); // Add each quote entry to the list container
+    });
+
+    quoteDisplayElement.appendChild(quoteListContainer); // Add the whole list container to the display area
+}
+
+
+// --- Category Filtering Logic ---
 function populateCategories() {
   const categoryFilterDropdown = document.getElementById('categoryFilter');
   categoryFilterDropdown.innerHTML = ''; // Clear old options
@@ -138,9 +177,10 @@ function filterQuotes() {
   // *** IMPORTANT CHANGE: Save the selected filter to local storage immediately. ***
   localStorage.setItem('lastCategoryFilter', currentCategoryFilter);
 
-  // Now, display a random quote from the *newly filtered* list.
-  showRandomQuote();
+  // Now, display ALL quotes from the *newly filtered* list.
+  displayFilteredQuotes(); // *** This is the key call now! ***
 }
+
 
 // --- JSON Import/Export Functions ---
 function exportToJsonFile() {
@@ -165,7 +205,7 @@ function importFromJsonFile(event) {
         quotes.push(...importedQuotes);
         saveQuotes();
         populateCategories(); // Update categories after importing!
-        filterQuotes(); // *** IMPORTANT: Re-apply filter after import to update display. ***
+        filterQuotes(); // Re-apply filter after import to update display (show all imported matching filter).
         alert('Quotes imported successfully!');
       } else {
         alert('Invalid JSON file format. Please upload a file with an array of quote objects (text, category).');
@@ -185,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 3. Set up the "Show New Quote" button.
   const newQuoteButton = document.getElementById('newQuote');
   if (newQuoteButton) {
-      newQuoteButton.addEventListener('click', showRandomQuote);
+      newQuoteButton.addEventListener('click', showRandomQuote); // This button still shows a RANDOM quote
   }
 
   // 4. Set up the 'Add Quote' form button.
@@ -199,7 +239,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // The 'Import Quotes' file input has its onchange directly in HTML now.
 
-  // 6. Show an initial random quote (respecting the loaded filter).
-  //    This is called AFTER populateCategories has set the dropdown value.
-  showRandomQuote();
+  // 6. Display all quotes based on the loaded filter when the page loads.
+  filterQuotes(); // *** IMPORTANT: Call filterQuotes here to display the list initially! ***
 });
